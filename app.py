@@ -289,19 +289,21 @@ async def api_get_pay_status(order_id: str):
     result = get_order_details(order_id)
 
     if result.get('success') == 'true' or result.get('success') == True:
-        trade_terms = result.get('result', {}).get('tradeTerms', [])
-        if trade_terms and isinstance(trade_terms, list):
-            pay_status_desc = trade_terms[0].get('payStatusDesc', '')
-            return PayStatusResponse(
-                success=True,
-                order_id=order_id,
-                pay_status=pay_status_desc
-            )
+        # 从 productItems[0].statusStr 获取订单状态描述
+        product_items = result.get('result', {}).get('productItems', [])
+        if product_items and isinstance(product_items, list):
+            status_str = product_items[0].get('statusStr', '')
+            if status_str:
+                return PayStatusResponse(
+                    success=True,
+                    order_id=order_id,
+                    pay_status=status_str
+                )
         return PayStatusResponse(
             success=True,
             order_id=order_id,
             pay_status="未知状态",
-            error_msg="无法获取支付状态详情"
+            error_msg="无法获取订单状态详情"
         )
 
     error_msg = result.get('errorMsg') or result.get('error') or '获取订单详情失败'
